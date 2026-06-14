@@ -1,6 +1,6 @@
 # Zap da Vila - Monitor de Recursos Urbanos
 
-> **Atividade Extensionista (2026)** > **Instituição:** Centro Universitário das Faculdades Metropolitanas Unidas (UFBRA)  
+> **Atividade Extensionista (2026)** > **Instituição:** (UFBRA)  
 > **Curso:** Ciência da Computação (5º Semestre)
 
 O **Zap da Vila** é um protótipo de chatbot para backend focado em zeladoria urbana e engajamento comunitário. O objetivo principal do projeto é oferecer um canal simplificado e acessível para que moradores de bairros periféricos possam reportar problemas estruturais diretamente pelo celular, alinhando a gestão pública local às metas de desenvolvimento sustentável da ONU.
