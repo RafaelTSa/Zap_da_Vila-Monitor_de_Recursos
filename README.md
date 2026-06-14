@@ -41,7 +41,6 @@ Zap_da_Vila-Monitor_de_Recursos/
 Bash
 git clone [https://github.com/RafaelTSa/Zap_da_Vila-Monitor_de_Recursos.git](https://github.com/RafaelTSa/Zap_da_Vila-Monitor_de_Recursos.git)
 cd Zap_da_Vila-Monitor_de_Recursos
-Link da página do projeto: https://github.com/rafael-teixeira-dos-santos/Zap_da_Vila-Monitor_de_Recursos
 
 2. Instalar as Dependências
 Utilizando o gerenciador de pacotes do Python, instale as bibliotecas necessárias declaradas no arquivo de requisitos:
