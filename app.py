@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 import datetime
 
 app = Flask(__name__)
+# Linha nova: garante que os acentos apareçam corretamente em português
+app.json.ensure_ascii = False
 
 # Banco de dados simulado na memória do servidor para registrar os atendimentos
 logs_atendimento = []
