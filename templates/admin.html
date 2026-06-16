@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zap da Vila - Painel Administrativo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container my-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 text-primary">Zap da Vila</h1>
+                <p class="text-muted">Painel de Monitoramento de Recursos Urbanos (Atividade Extensionista 2026)</p>
+            </div>
+            <span class="badge bg-success p-2">Conectado ao MongoDB Atlas</span>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white font-weight-bold">
+                <h5 class="mb-0 text-secondary">Chamados Registrados pelos Moradores</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col" class="ps-3">Protocolo</th>
+                                <th scope="col">Data/Hora</th>
+                                <th scope="col">Categoria (ODS)</th>
+                                <th scope="col">Localização / Referência</th>
+                                <th scope="col">Usuário (ID)</th>
+                                <th scope="col" class="pe-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for chamado in chamados %}
+                            <tr>
+                                <td class="fw-bold ps-3">#{{ chamado.id_protocolo }}</td>
+                                <td class="text-muted">{{ chamado.data_hora }}</td>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        {{ chamado.categoria }}
+                                    </span>
+                                </td>
+                                <td>{{ chamado.Localizacao }}</td>
+                                <td><code>{{ chamado.usuario_id }}</code></td>
+                                <td class="pe-3">
+                                    <span class="badge bg-warning text-dark">{{ chamado.Status }}</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    Nenhum chamado registrado na nuvem até o momento.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
