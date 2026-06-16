@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from pymongo import MongoClient
 import datetime
 # Importar o resolvedor de DNS para corrigir o bloqueio do roteador
@@ -105,6 +105,15 @@ def webhook():
             "resposta": resposta_final,
             "status": "sucesso"
         })
+
+@app.route('/admin', methods=['GET'])
+def admin_dashboard():
+    # 1. Conecta na coleção de chamados e busca todos os registros, ordenando pelo protocolo mais recente
+    # (.find() traz tudo do banco)
+    chamados_do_banco = list(db.chamados_moradores.find().sort("id_protocolo", -1))
+    
+    # 2. Renderiza a página admin.html passando a lista de chamados que coletamos
+    return render_template('admin.html', chamados=chamados_do_banco)
 
 if __name__ == '__main__':
     app.run(debug=True)
