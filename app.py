@@ -2,6 +2,12 @@ from flask import Flask, request, jsonify, render_template
 from pymongo import MongoClient
 import datetime
 import certifi
+import os
+# Importa o carregador do arquivo .env
+from dotenv import load_dotenv
+
+# Carrega as variáveis contidas no arquivo .env local
+load_dotenv()
 
 # =====================================================
 # CONFIGURAÇÃO FLASK
@@ -11,13 +17,13 @@ app = Flask(__name__)
 app.json.ensure_ascii = False
 
 # =====================================================
-# CONFIGURAÇÃO MONGODB ATLAS
+# CONFIGURAÇÃO MONGODB ATLAS (AGORA PROTEGIDA)
 # =====================================================
 
-MONGO_URI = "mongodb://texera09_db_user:lnee7DHq3gwCRKFG@ac-dgpkn7c-shard-00-00.fybtv2f.mongodb.net:27017,ac-dgpkn7c-shard-00-01.fybtv2f.mongodb.net:27017,ac-dgpkn7c-shard-00-02.fybtv2f.mongodb.net:27017/zap_da_vila_db?ssl=true&replicaSet=atlas-nc5b9j-shard-0&authSource=admin&retryWrites=true&w=majority"
+# Puxa a string de conexão direto da memória da máquina, sem expor no código
+MONGO_URI = os.getenv("MONGO_URI")
 
 try:
-
     client = MongoClient(
         MONGO_URI,
         tls=True,
@@ -32,17 +38,14 @@ try:
     print("MongoDB Atlas conectado com sucesso!")
     print("====================================\n")
 
-    # BANCO E COLLECTION
     db = client['zap_da_vila_db']
     colecao_chamados = db['chamados_moradores']
 
 except Exception as e:
-
     print("\n====================================")
     print("ERRO AO CONECTAR NO MONGODB ATLAS:")
     print(e)
     print("====================================\n")
-
     client = None
     db = None
     colecao_chamados = None
@@ -50,40 +53,28 @@ except Exception as e:
 # =====================================================
 # CONTROLE DE ESTADO DOS USUÁRIOS
 # =====================================================
-
 estados_usuarios = {}
 
 # =====================================================
 # WEBHOOK
 # =====================================================
-
 @app.route('/webhook', methods=['POST'])
 def webhook():
-
     dados = request.get_json()
-
     mensagem = dados.get('mensagem', '').strip()
     usuario_id = dados.get('usuario_id', 'padrao')
 
-    # VERIFICA ESTADO DO USUÁRIO
     if usuario_id not in estados_usuarios:
         estados_usuarios[usuario_id] = {'passo': 'menu'}
 
     estado_atual = estados_usuarios[usuario_id]
 
-    # =================================================
-    # MENU INICIAL
-    # =================================================
-
     if estado_atual['passo'] == 'menu':
-
         if mensagem == '1':
-
             estados_usuarios[usuario_id] = {
                 'passo': 'aguardando_endereco',
                 'categoria': 'ODS 7 - Iluminação Pública'
             }
-
             return jsonify({
                 "resposta": (
                     "Você selecionou: Iluminação Pública (ODS 7).\n"
@@ -93,12 +84,10 @@ def webhook():
             })
 
         elif mensagem == '2':
-
             estados_usuarios[usuario_id] = {
                 'passo': 'aguardando_endereco',
                 'categoria': 'ODS 6 - Vazamento / Saneamento'
             }
-
             return jsonify({
                 "resposta": (
                     "Você selecionou: Vazamento / Saneamento (ODS 6).\n"
@@ -106,9 +95,7 @@ def webhook():
                 ),
                 "status": "sucesso"
             })
-
         else:
-
             return jsonify({
                 "resposta": (
                     "Olá! Bem-vindo ao Zap da Vila.\n\n"
@@ -119,15 +106,8 @@ def webhook():
                 "status": "sucesso"
             })
 
-    # =================================================
-    # CADASTRO DO CHAMADO
-    # =================================================
-
     elif estado_atual['passo'] == 'aguardando_endereco':
-
-        # VERIFICA SE O BANCO ESTÁ CONECTADO
         if colecao_chamados is None:
-
             return jsonify({
                 "resposta": "Erro: Banco de dados indisponível.",
                 "status": "erro"
@@ -136,7 +116,6 @@ def webhook():
         categoria = estado_atual['categoria']
 
         try:
-
             total_documentos = colecao_chamados.count_documents({})
             novo_protocolo = total_documentos + 1
 
@@ -171,12 +150,10 @@ def webhook():
             })
 
         except Exception as e:
-
             print("\n====================================")
             print("ERRO AO SALVAR DOCUMENTO:")
             print(e)
             print("====================================\n")
-
             return jsonify({
                 "resposta": "Erro ao salvar chamado no MongoDB.",
                 "status": "erro"
@@ -185,56 +162,31 @@ def webhook():
 # =====================================================
 # PAINEL ADMINISTRATIVO
 # =====================================================
-
 @app.route('/admin', methods=['GET'])
 def admin_dashboard():
-
     if colecao_chamados is None:
-
         return """
         <h1>Erro de conexão com MongoDB Atlas</h1>
         <p>Verifique a URI, senha e Network Access.</p>
         """
-
     try:
-
         chamados_do_banco = list(
             colecao_chamados.find().sort("id_protocolo", -1)
         )
-
-        print("\n===== DADOS VINDOS DO MONGODB =====")
-        print(chamados_do_banco)
-        print("===================================\n")
-
         return render_template(
             'admin.html',
             chamados=chamados_do_banco
         )
-
     except Exception as e:
-
-        print("\n====================================")
-        print("ERRO AO BUSCAR DADOS:")
-        print(e)
-        print("====================================\n")
-
-        return f"""
-        <h1>Erro ao buscar dados do MongoDB</h1>
-        <pre>{e}</pre>
-        """
+        return f"<h1>Erro ao buscar dados do MongoDB</h1><pre>{e}</pre>"
 
 # =====================================================
 # ROTA DE TESTE
 # =====================================================
-
 @app.route('/teste')
 def teste():
-
     if colecao_chamados is None:
-
-        return """
-        <h1>Banco de dados indisponível</h1>
-        """
+        return "<h1>Banco de dados indisponível</h1>"
 
     teste_doc = {
         "id_protocolo": 999,
@@ -244,26 +196,11 @@ def teste():
         "localizacao": "Rua Teste",
         "status": "Aberto"
     }
-
     try:
-
         resultado = colecao_chamados.insert_one(teste_doc)
-
-        return f"""
-        <h1>Documento inserido com sucesso!</h1>
-        <p>ID: {resultado.inserted_id}</p>
-        """
-
+        return f"<h1>Documento inserido!</h1><p>ID: {resultado.inserted_id}</p>"
     except Exception as e:
-
-        return f"""
-        <h1>Erro ao inserir documento</h1>
-        <pre>{e}</pre>
-        """
-
-# =====================================================
-# INICIALIZAÇÃO
-# =====================================================
+        return f"<h1>Erro ao inserir documento</h1><pre>{e}</pre>"
 
 if __name__ == '__main__':
     app.run(debug=True)
