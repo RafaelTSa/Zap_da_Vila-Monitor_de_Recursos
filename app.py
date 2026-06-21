@@ -17,10 +17,10 @@ app = Flask(__name__)
 app.json.ensure_ascii = False
 
 # =====================================================
-# CONFIGURAÇÃO MONGODB ATLAS (AGORA PROTEGIDA)
+# CONFIGURAÇÃO MONGODB ATLAS
 # =====================================================
 
-# Puxa a string de conexão direto da memória da máquina, sem expor no código
+# Puxa a string de conexão direto da memória da máquina.
 MONGO_URI = os.getenv("MONGO_URI")
 
 try:
@@ -201,6 +201,33 @@ def teste():
         return f"<h1>Documento inserido!</h1><p>ID: {resultado.inserted_id}</p>"
     except Exception as e:
         return f"<h1>Erro ao inserir documento</h1><pre>{e}</pre>"
+
+# =====================================================
+# ROTA PARA ATUALIZAR STATUS DO CHAMADO
+# =====================================================
+@app.route('/admin/atualizar_status/<int:id_protocolo>', methods=['POST'])
+def atualizar_status(id_protocolo):
+    if colecao_chamados is None:
+        return "Banco de dados indisponível", 500
+
+    # Pega o novo status vindo do botão do painel
+    novo_status = request.form.get('novo_status')
+
+    try:
+        # Atualiza o documento baseado no id_protocolo numérico
+        colecao_chamados.update_one(
+            {"id_protocolo": id_protocolo},
+            {"$set": {"status": novo_status}}
+        )
+        print(f"\n[MONGODB] Protocolo #{id_protocolo} atualizado para {novo_status}!\n")
+        
+        # Redireciona de volta para o painel atualizado
+        from flask import redirect, url_for
+        return redirect(url_for('admin_dashboard'))
+        
+    except Exception as e:
+        print(f"Erro ao atualizar status: {e}")
+        return f"Erro ao atualizar: {e}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)

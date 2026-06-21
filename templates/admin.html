@@ -31,7 +31,8 @@
                                 <th scope="col">Categoria (ODS)</th>
                                 <th scope="col">Localização / Referência</th>
                                 <th scope="col">Usuário (ID)</th>
-                                <th scope="col" class="pe-3">Status</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="pe-3">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -46,13 +47,36 @@
                                 </td>
                                 <td>{{ chamado.localizacao }}</td>
                                 <td><code>{{ chamado.usuario_id }}</code></td>
+                                <td>
+                                    {% if chamado.status == 'Aberto' %}
+                                        <span class="badge bg-warning text-dark">Aberto</span>
+                                    {% elif chamado.status == 'Em Atendimento' %}
+                                        <span class="badge bg-primary">Em Atendimento</span>
+                                    {% elif chamado.status == 'Resolvido' %}
+                                        <span class="badge bg-success">Resolvido</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ chamado.status }}</span>
+                                    {% endif %}
+                                </td>
                                 <td class="pe-3">
-                                    <span class="badge bg-warning text-dark">{{ chamado.status }}</span>
+                                    <form action="{{ url_for('atualizar_status', id_protocolo=chamado.id_protocolo) }}" method="POST" class="d-inline">
+                                        {% if chamado.status != 'Em Atendimento' and chamado.status != 'Resolvido' %}
+                                        <button type="submit" name="novo_status" value="Em Atendimento" class="btn btn-sm btn-outline-primary py-0 px-1" style="font-size: 0.75rem;">
+                                            Atender
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if chamado.status != 'Resolvido' %}
+                                        <button type="submit" name="novo_status" value="Resolvido" class="btn btn-sm btn-outline-success py-0 px-1" style="font-size: 0.75rem;">
+                                            Resolver
+                                        </button>
+                                        {% endif %}
+                                    </form>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">
+                                <td colspan="7" class="text-center py-4 text-muted">
                                     Nenhum chamado registrado na nuvem até o momento.
                                 </td>
                             </tr>
