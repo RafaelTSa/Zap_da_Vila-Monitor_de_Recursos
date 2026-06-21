@@ -114,4 +114,141 @@ def webhook():
                     "⚠️ Opção inválida!\n\n"
                     "Por favor, escolha uma opção respondendo apenas com o número:\n"
                     "1 - Relatar lâmpada queimada (ODS 7)\n"
-                    "2 - Rel
+                    "2 - Relatar vazamento de água/esgoto (ODS 6)"
+                ),
+                "status": "sucesso"
+            })
+
+    elif estado_atual['passo'] == 'aguardando_endereco':
+        if colecao_chamados is None:
+            return jsonify({
+                "resposta": "Erro: O banco de dados está indisponível no momento.",
+                "status": "erro"
+            })
+
+        # Validação simples de endereço muito curto
+        if len(mensagem) < 5:
+            return jsonify({
+                "resposta": (
+                    "⚠️ O endereço informado parece muito curto.\n"
+                    "Por favor, digite o nome da rua e o número para que a equipe possa localizar o problema."
+                ),
+                "status": "sucesso"
+            })
+
+        categoria = estado_atual['categoria']
+
+        try:
+            total_documentos = colecao_chamados.count_documents({})
+            novo_protocolo = total_documentos + 1
+
+            novo_chamado = {
+                "id_protocolo": novo_protocolo,
+                "usuario_id": usuario_id,
+                "data_hora": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "categoria": categoria,
+                "localizacao": mensagem,
+                "status": "Aberto"
+            }
+
+            resultado = colecao_chamados.insert_one(novo_chamado)
+
+            print("\n====================================")
+            print("DOCUMENTO SALVO NO MONGODB!")
+            print(f"ID: {resultado.inserted_id}")
+            print("====================================\n")
+
+            del estados_usuarios[usuario_id]
+
+            resposta_final = (
+                f"✅ Obrigado! Seu relato foi registrado com sucesso.\n\n"
+                f"📋 Protocolo: #{novo_protocolo}\n"
+                f"📍 Categoria: {categoria}\n"
+                f"🏠 Local: {mensagem}\n\n"
+                f"Nossa equipe de zeladoria comunitária já recebeu o alerta!"
+            )
+
+            return jsonify({
+                "resposta": resposta_final,
+                "status": "sucesso"
+            })
+
+        except Exception as e:
+            print(f"ERRO AO SALVAR DOCUMENTO: {e}")
+            return jsonify({
+                "resposta": "Erro ao salvar chamado no MongoDB.",
+                "status": "erro"
+            })
+        
+# =====================================================
+# PAINEL ADMINISTRATIVO
+# =====================================================
+@app.route('/admin', methods=['GET'])
+def admin_dashboard():
+    if colecao_chamados is None:
+        return """
+        <h1>Erro de conexão com MongoDB Atlas</h1>
+        <p>Verifique a URI, senha e Network Access.</p>
+        """
+    try:
+        chamados_do_banco = list(
+            colecao_chamados.find().sort("id_protocolo", -1)
+        )
+        return render_template(
+            'admin.html',
+            chamados=chamados_do_banco
+        )
+    except Exception as e:
+        return f"<h1>Erro ao buscar dados do MongoDB</h1><pre>{e}</pre>"
+
+# =====================================================
+# ROTA DE TESTE
+# =====================================================
+@app.route('/teste')
+def teste():
+    if colecao_chamados is None:
+        return "<h1>Banco de dados indisponível</h1>"
+
+    teste_doc = {
+        "id_protocolo": 999,
+        "usuario_id": "teste",
+        "data_hora": "2026-06-15",
+        "categoria": "Teste",
+        "localizacao": "Rua Teste",
+        "status": "Aberto"
+    }
+    try:
+        resultado = colecao_chamados.insert_one(teste_doc)
+        return f"<h1>Documento inserido!</h1><p>ID: {resultado.inserted_id}</p>"
+    except Exception as e:
+        return f"<h1>Erro ao inserir documento</h1><pre>{e}</pre>"
+
+# =====================================================
+# ROTA PARA ATUALIZAR STATUS DO CHAMADO
+# =====================================================
+@app.route('/admin/atualizar_status/<int:id_protocolo>', methods=['POST'])
+def atualizar_status(id_protocolo):
+    if colecao_chamados is None:
+        return "Banco de dados indisponível", 500
+
+    # Pega o novo status vindo do botão do painel
+    novo_status = request.form.get('novo_status')
+
+    try:
+        # Atualiza o documento baseado no id_protocolo numérico
+        colecao_chamados.update_one(
+            {"id_protocolo": id_protocolo},
+            {"$set": {"status": novo_status}}
+        )
+        print(f"\n[MONGODB] Protocolo #{id_protocolo} atualizado para {novo_status}!\n")
+        
+        # Redireciona de volta para o painel atualizado
+        from flask import redirect, url_for
+        return redirect(url_for('admin_dashboard'))
+        
+    except Exception as e:
+        print(f"Erro ao atualizar status: {e}")
+        return f"Erro ao atualizar: {e}", 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
