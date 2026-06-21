@@ -71,7 +71,7 @@ curl -X POST [http://127.0.0.1:5000/webhook](http://127.0.0.1:5000/webhook) -H "
 📈 Próximos Passos de Desenvolvimento
 [x] Migrar a simulação de persistência em memória para um banco de dados relacional ou NoSQL estável (Concluído com MongoDB Atlas).
 
-[ ] Criar uma rota administrativa ou painel visual (Dashboard de Gestão) para listar e alterar o status dos chamados coletados.
+[x] Criar uma rota administrativa ou painel visual (Dashboard de Gestão) para listar e alterar o status dos chamados coletados.
 
 [ ] Integrar o Webhook à API oficial ou emulada do WhatsApp Business.
 
